@@ -2,6 +2,8 @@
 import socket
 import ssl
 
+from bot_personality import *
+
 # Configuration
 server = "irc.example.com"
 port = 6697
@@ -38,19 +40,20 @@ def sendmsg(msg, target=channel):
 # Main routine
 def main():
   joinchan(channel)
-  sendmsg("Hello, world!", channel)
+  print("Joined " + channel)
   while 1:
     ircmsg = ircsock.recv(512).decode("UTF-8")
     ircmsg = ircmsg.strip('\n\r')
     #print(ircmsg)
     name = ircmsg.split('!',1)[0][1:]
     if ircmsg.find("PRIVMSG") != -1: # Normal messages
+      message = ircmsg.split(':',2)[2].split("@"+botnick)[1][1:]
       if ircmsg.find(" "+channel) != -1: # We're in the channel
         if ircmsg.find("@"+botnick) != -1:
-          sendmsg("Hello, world!", channel)
+          sendmsg(process_message(message=message, nick=name, public=True), channel)
       elif ircmsg.find(" "+channel) == -1: # We're not in the channel
         if len(name) <= 32: # Reply to PMs
-          sendmsg("Hello, " + name + "!", name)
+          sendmsg(process_message(message=message, nick=name, public=False), name)
     elif ircmsg.find("NOTICE") != -1: # Notices
       if name.find("Serv") != -1: # Don't send messages to Anope services
           if name.find("NickServ") != -1:
